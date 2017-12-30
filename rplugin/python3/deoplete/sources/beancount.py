@@ -1,5 +1,6 @@
 import collections
 import re
+import logging
 
 from deoplete.source.base import Base
 
@@ -15,7 +16,6 @@ DIRECTIVES = [
     'price', 'event', 'query', 'custom'
 ]
 
-
 class Source(Base):
     def __init__(self, vim):
         super().__init__(vim)
@@ -27,6 +27,7 @@ class Source(Base):
         self.rank = 500
         self.min_pattern_length = 0
         self.attributes = collections.defaultdict(list)
+        self.sorters = ['sorter_beancount']
 
     def on_init(self, context):
         if not HAS_BEANCOUNT:
@@ -46,8 +47,9 @@ class Source(Base):
         if re.match(r'^\d{4}[/-]\d\d[/-]\d\d \w*$', context['input']):
             return [{'word': x, 'kind': 'directive'} for x in DIRECTIVES]
         # line that starts with whitespace (-> accounts)
-        if re.match(r'^(\s)+[\w:]+$', context['input']):
-            return [{'word': x, 'kind': 'account'} for x in attrs['accounts']]
+        if re.match(r'^(\s)+[\w:]*$', context['input']):
+            ans = [{'word': x, 'kind': 'account'} for x in attrs['accounts']]
+            return ans
         # directive followed by account
         if re.search(
                 r'(balance|document|note|open|close|pad(\s[\w:]+)?)'
